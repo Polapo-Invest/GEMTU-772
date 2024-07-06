@@ -204,4 +204,19 @@ class GEMTU772:
                 floor_history.iloc[step] = floor_value
 
             return weight_history.shift(1).fillna(0)
+    
+    
+    # Transaction Cost Function (Compound rate of return method assuming reinvestment)
+    def transaction_cost(self, weights_df, rets_df, cost=0.0005):
+        # Investment Weight of Previous Period (The backslash ('\') in Python is used as a line continuation character.)
+        prev_weights_df = (weights_df.shift(1).fillna(0) * (1 + rets_df.iloc[self.param-1:,:])) \
+        .div((weights_df.shift(1).fillna(0) * (1 + rets_df.iloc[self.param-1:,:])).sum(axis=1), axis=0)
+        # sum(axis=1) sums across columns for each row, resulting in a series where each element is the sum of the respective row
+
+
+        # Transaction Cost Dataframe
+        cost_df = abs(weights_df - prev_weights_df) * cost
+        cost_df.fillna(0, inplace=True)
+
+        return cost_df
         
