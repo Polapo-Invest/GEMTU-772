@@ -169,7 +169,7 @@ class GEMTU772:
             weights[weights > 1] = 1
             return weights
         
-        # KL 75. 수정 켈리?
+        # KL (Modified by implementing CDF; cumulative distribution function)
         def kl(self, port_rets, param):
             sharpe_ratio = (port_rets.rolling(param).mean() * np.sqrt(param) / port_rets.rolling(param).std())
             weights = pd.Series(2 * norm.cdf(sharpe_ratio) - 1, index=port_rets.index).fillna(0)
