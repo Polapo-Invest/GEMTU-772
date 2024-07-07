@@ -219,4 +219,65 @@ class GEMTU772:
         cost_df.fillna(0, inplace=True)
 
         return cost_df
+    
+    
+    # Backtesting Execution Function
+    def run(self, cs_model, ts_model, cost):
+        # Empty Dictionary
+        backtest_dict = {}
+        
+        # Intraday Return Rate DataFrame
+        rets = self.rets
+        
+        # Select and Run Cross-Sectional Risk Models
+        for i, index in enumerate(rets.index[self.param-1:]):
+            if cs_model == 'EW':
+                backtest_dict[index] = self.CrossSectional().ew(self.er[i])
+            elif cs_model == 'MSR':
+                backtest_dict[index] = self.CrossSectional().msr(self.er[i], self.cov[i])
+            elif cs_model == 'GMV':
+                backtest_dict[index] = self.CrossSectional().gmv(self.cov[i])
+            elif cs_model == 'MDP':
+                backtest_dict[index] = self.CrossSectional().mdp(self.vol[i], self.cov[i])
+            elif cs_model == 'EMV':
+                backtest_dict[index] = self.CrossSectional().emv(self.vol[i])
+            elif cs_model == 'RP':
+                backtest_dict[index] = self.CrossSectional().rp(self.cov[i])
+        
+        # Cross-Sectional Weights DataFrame
+        cs_weights = pd.DataFrame(list(backtest_dict.values()), index=backtest_dict.keys(), columns=rets.columns)
+        cs_weights.fillna(0, inplace=True)
+
+        # Cross-Sectional Risk Models Return on Assets
+        cs_rets = cs_weights.shift(1) * rets.iloc[self.param-1:,:]
+
+        # Cross-Sectional Risk Models Portfolio Return
+        cs_port_rets = cs_rets.sum(axis=1)
+        
+        # Select and Run Time-Series Risk Models
+        if ts_model == 'VT':
+            ts_weights = (self.TimeSeries().vt(cs_port_rets, self.param))
+        elif ts_model == 'CVT':
+            ts_weights = (self.TimeSeries().cvt(cs_port_rets, self.param))
+        elif ts_model == 'KL':
+            ts_weights = (self.TimeSeries().kl(cs_port_rets, self.param))
+        elif ts_model == 'CPPI':
+            ts_weights = (self.TimeSeries().cppi(cs_port_rets))
+        elif ts_model == None:
+            ts_weights = 1
+
+        # Final Portfolio Investment Weights
+        port_weights = cs_weights.multiply(ts_weights, axis=0)
+
+        # Transaction Cost DataFrame
+        cost = self.transaction_cost(port_weights, rets)
+
+        # Final Portfolio Return by Assets
+        port_asset_rets = port_weights.shift() * rets - cost
+
+        # Final Portfolio Return
+        port_rets = port_asset_rets.sum(axis=1)
+        port_rets.index = pd.to_datetime(port_rets.index).strftime("%Y-%m-%d")
+
+        return port_weights, port_asset_rets, port_rets
         
