@@ -320,3 +320,19 @@ class GEMTU772:
         if qs_report == True:
             port_rets.index = pd.to_datetime(port_rets.index)
             qs.reports.html(port_rets, output='./file-name.html')
+
+
+# Backtesting Engine Execution and Performance Analysis
+
+# Engine Initialization
+engine = GEMTU772(df)
+
+# Run Backtest; Select One Cross-Sectional Risk Model and One Time-Series Risk Model
+res = engine.run(cs_model='MDP', ts_model='VT', cost=0.0005)
+
+port_weights = res[0]
+port_asset_rets = res[1]
+port_rets = res[2]
+
+# Visualize Backtesting Result
+engine.performance_analytics(port_weights, port_asset_rets, port_rets, qs_report=True)
