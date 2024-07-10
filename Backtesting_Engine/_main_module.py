@@ -42,6 +42,9 @@ class GEMTU772:
         # Covariance Matrix
         cov = self.rets.rolling(self.param).cov().dropna() * self.param
         self.cov = cov.values.reshape(int(cov.shape[0]/cov.shape[1]), cov.shape[1], cov.shape[1])
+        
+        # Transaction Cost per Unit
+        self.cost = 0.0005
 
     # Cross-Sectional Risk Models Class 
     class CrossSectional:
